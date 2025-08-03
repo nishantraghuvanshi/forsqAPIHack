@@ -151,28 +151,7 @@ docker-compose up -d
 2. Set production environment variables
 3. Deploy to your preferred platform (Vercel, Heroku, AWS, etc.)
 
-## 📊 Environment Variables
 
-### Server (.env)
-```bash
-NODE_ENV=development
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/recommendation-engine
-JWT_SECRET=your-jwt-secret
-
-# API Keys
-FOURSQUARE_API_KEY=your-foursquare-api-key
-OPENAI_API_KEY=your-openai-api-key
-
-# Redis (optional)
-REDIS_URL=redis://localhost:6379
-```
-
-### Client (.env)
-```bash
-REACT_APP_API_URL=http://localhost:5000/api
-REACT_APP_GOOGLE_MAPS_API_KEY=your-google-maps-key
-```
 
 ## 🤝 Contributing
 
@@ -185,12 +164,6 @@ REACT_APP_GOOGLE_MAPS_API_KEY=your-google-maps-key
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- 📧 Email: support@example.com
-- 💬 Issues: [GitHub Issues](https://github.com/your-repo/issues)
-- 📖 Docs: [Documentation](./docs/)
 
 ---
 
