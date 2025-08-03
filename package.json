@@ -1,0 +1,32 @@
+{
+  "name": "personalized-recommendation-engine",
+  "version": "1.0.0",
+  "description": "AI-powered location recommendation engine with Foursquare Places API integration",
+  "private": true,
+  "scripts": {
+    "test-server": "node test-server.js",
+    "dev": "node test-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "recommendation-engine",
+    "foursquare",
+    "openai",
+    "location-based",
+    "ai",
+    "personalization",
+    "react",
+    "nodejs",
+    "typescript"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "main": "test-server.js"
+}

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendation Engine - Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .status {
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .success { background: rgba(46, 204, 113, 0.2); }
+        .error { background: rgba(231, 76, 60, 0.2); }
+        .test-section {
+            margin: 2rem 0;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .json-display {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-sizing: border-box;
+        }
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Recommendation Engine Test</h1>
+            <p>Testing the foundation setup and API connectivity</p>
+        </div>
+
+        <div id="server-status" class="status">
+            <h3>📡 Server Status</h3>
+            <p id="status-text">Checking server...</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 API Tests</h3>
+            <button onclick="testHealthCheck()">Health Check</button>
+            <button onclick="testAPI()">Test API Endpoint</button>
+            <button onclick="testRecommendations()">Test Recommendations</button>
+            
+            <div id="test-results" class="json-display"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Custom Recommendation Test</h3>
+            <input type="text" id="query-input" placeholder="Enter your query (e.g., 'quiet coffee shop to work')" value="quiet coffee shop to work">
+            <input type="number" id="lat-input" placeholder="Latitude" value="40.7128" step="any">
+            <input type="number" id="lng-input" placeholder="Longitude" value="-74.0060" step="any">
+            <button onclick="testCustomRecommendation()">Get Recommendations</button>
+            
+            <div id="custom-results" class="json-display"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Test Results Summary</h3>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let testResults = {
+            health: null,
+            api: null,
+            recommendations: null,
+            custom: null
+        };
+
+        // Check server status on load
+        window.onload = function() {
+            checkServerStatus();
+        };
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                document.getElementById('status-text').innerHTML = `
+                    ✅ Server is running!<br>
+                    Version: ${data.version}<br>
+                    Status: ${data.status}<br>
+                    Time: ${new Date(data.timestamp).toLocaleString()}
+                `;
+                document.getElementById('server-status').className = 'status success';
+            } catch (error) {
+                document.getElementById('status-text').innerHTML = `
+                    ❌ Server is not running!<br>
+                    Error: ${error.message}<br>
+                    Make sure to start the server with: node test-server.js
+                `;
+                document.getElementById('server-status').className = 'status error';
+            }
+        }
+
+        async function testHealthCheck() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                testResults.health = 'success';
+                displayResult('Health Check ✅', data);
+            } catch (error) {
+                testResults.health = 'error';
+                displayResult('Health Check ❌', { error: error.message });
+            }
+            updateSummary();
+        }
+
+        async function testAPI() {
+            try {
+                const response = await fetch(`${API_BASE}/api/test`);
+                const data = await response.json();
+                testResults.api = 'success';
+                displayResult('API Test ✅', data);
+            } catch (error) {
+                testResults.api = 'error';
+                displayResult('API Test ❌', { error: error.message });
+            }
+            updateSummary();
+        }
+
+        async function testRecommendations() {
+            try {
+                const response = await fetch(`${API_BASE}/api/recommendations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: 'coffee shop',
+                        location: { lat: 40.7128, lng: -74.0060 }
+                    })
+                });
+                const data = await response.json();
+                testResults.recommendations = 'success';
+                displayResult('Recommendations Test ✅', data);
+            } catch (error) {
+                testResults.recommendations = 'error';
+                displayResult('Recommendations Test ❌', { error: error.message });
+            }
+            updateSummary();
+        }
+
+        async function testCustomRecommendation() {
+            const query = document.getElementById('query-input').value;
+            const lat = parseFloat(document.getElementById('lat-input').value);
+            const lng = parseFloat(document.getElementById('lng-input').value);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/recommendations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query,
+                        location: { lat, lng }
+                    })
+                });
+                const data = await response.json();
+                testResults.custom = 'success';
+                document.getElementById('custom-results').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                testResults.custom = 'error';
+                document.getElementById('custom-results').textContent = JSON.stringify({ error: error.message }, null, 2);
+            }
+            updateSummary();
+        }
+
+        function displayResult(title, data) {
+            document.getElementById('test-results').textContent = `${title}\n\n${JSON.stringify(data, null, 2)}`;
+        }
+
+        function updateSummary() {
+            const summary = Object.entries(testResults)
+                .map(([test, result]) => {
+                    const icon = result === 'success' ? '✅' : result === 'error' ? '❌' : '⏳';
+                    return `${icon} ${test.charAt(0).toUpperCase() + test.slice(1)}: ${result || 'Not tested'}`;
+                })
+                .join('<br>');
+            
+            document.getElementById('summary').innerHTML = summary;
+        }
+
+        // Initialize summary
+        updateSummary();
+    </script>
+</body>
+</html>
