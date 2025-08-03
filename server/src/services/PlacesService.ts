@@ -1,6 +1,6 @@
 import { FoursquareService } from './FoursquareService';
-import { Place, SearchParams } from '@recommendation-engine/shared';
-import { logger } from '@/utils/logger';
+import { Place, SearchParams } from '../types';
+import { logger } from '../utils/logger';
 
 export class PlacesService {
   private foursquareService: FoursquareService;

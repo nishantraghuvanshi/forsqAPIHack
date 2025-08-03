@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { RecommendationsController } from '@/controllers/RecommendationsController';
+import { RecommendationsController } from '../controllers/RecommendationsController';
 
 const router = Router();
 const recommendationsController = new RecommendationsController();

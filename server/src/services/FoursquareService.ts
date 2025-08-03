@@ -6,9 +6,9 @@ import {
   FoursquareAutocompleteResponse,
   LatLng,
   Photo
-} from '@recommendation-engine/shared';
-import { config } from '@/config/config';
-import { logger } from '@/utils/logger';
+} from '../types';
+import { config } from '../config/config';
+import { logger } from '../utils/logger';
 
 export class FoursquareService {
   private client: AxiosInstance;

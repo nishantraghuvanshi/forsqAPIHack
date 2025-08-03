@@ -1,6 +1,6 @@
 import { Application } from 'express';
 import rateLimit from 'express-rate-limit';
-import { config } from '@/config';
+import { config } from '../config';
 
 export function setupMiddleware(app: Application): void {
   // Rate limiting

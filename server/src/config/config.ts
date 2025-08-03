@@ -1,4 +1,4 @@
-import { AppConfig } from '@recommendation-engine/shared';
+import { AppConfig } from '../types';
 
 export const config: AppConfig = {
   foursquare: {
@@ -7,10 +7,10 @@ export const config: AppConfig = {
     defaultRadius: parseInt(process.env.DEFAULT_SEARCH_RADIUS || '1000'),
     maxResults: parseInt(process.env.MAX_SEARCH_RESULTS || '50')
   },
-  openai: {
-    apiKey: process.env.OPENAI_API_KEY || '',
-    model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-    maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '1000')
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY || '',
+    model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    maxTokens: parseInt(process.env.GEMINI_MAX_TOKENS || '1000')
   },
   database: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/recommendation-engine'

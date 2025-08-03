@@ -19,7 +19,7 @@ Backend (Node.js + Express + TypeScript)
     ↓ API Calls
 External Services:
     - Foursquare Places API
-    - OpenAI API
+    - Google Gemini AI API
     - MongoDB (User data & feedback)
 ```
 
@@ -31,7 +31,7 @@ External Services:
 - MongoDB instance (local or cloud)
 - API Keys for:
   - Foursquare Places API
-  - OpenAI API
+  - Google Gemini AI API
 
 ### Installation
 
@@ -42,18 +42,29 @@ External Services:
    npm run setup
    ```
 
-2. **Configure environment variables:**
+2. **Configure API keys:**
    ```bash
-   # Copy example env files
-   cp server/.env.example server/.env
-   cp client/.env.example client/.env
-   
-   # Edit with your API keys
-   nano server/.env
-   nano client/.env
+   # Interactive script to set up your API keys
+   npm run configure
    ```
 
-3. **Start development servers:**
+3. **Validate configuration:**
+   ```bash
+   # Check that everything is properly configured
+   npm run validate
+   ```
+   
+   # Required keys:
+   FOURSQUARE_API_KEY=your-foursquare-api-key-here
+   GEMINI_API_KEY=your-gemini-api-key-here
+   ```
+
+3. **Validate configuration:**
+   ```bash
+   node validate-env.js
+   ```
+
+4. **Start development servers:**
    ```bash
    # Start both client and server
    npm run dev
@@ -87,14 +98,19 @@ project/
 │   │   ├── services/      # Business logic
 │   │   └── types/         # TypeScript types
 │   └── package.json
+├── scripts/               # Utility scripts
+│   ├── setup.sh          # Project initialization
+│   ├── configure-api-keys.sh  # API key configuration
+│   ├── validate-env.sh   # Environment validation
+│   └── README.md         # Script documentation
 ├── shared/                 # Shared TypeScript types
 └── docs/                   # Documentation
 ```
 
 ## 🔧 Available Scripts
 
+### Development Scripts
 ```bash
-npm run setup          # Install all dependencies
 npm run dev           # Start both client and server
 npm run dev:client    # Start frontend only
 npm run dev:server    # Start backend only
@@ -102,6 +118,18 @@ npm run build         # Build both applications
 npm run test          # Run all tests
 npm run lint          # Lint all code
 ```
+
+### Utility Scripts
+```bash
+npm run setup         # Complete project initialization
+npm run configure     # Interactive API key setup
+npm run validate      # Validate environment configuration
+npm run test-setup    # Comprehensive project testing
+npm run test-server   # Quick API server testing
+npm run validate-js   # JavaScript-based validation
+```
+
+For detailed information about utility scripts, see [`scripts/README.md`](scripts/README.md).
 
 ## 🌐 API Endpoints
 
@@ -167,4 +195,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-Built with ❤️ using React, Node.js, Foursquare Places API, and OpenAI
+Built with ❤️ using React, Node.js, Foursquare Places API, and Google Gemini AI

@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { FeedbackItem, UserContext } from '@recommendation-engine/shared';
+import { FeedbackItem, UserContext } from '../types';
 
 export interface IFeedbackItem extends Omit<FeedbackItem, 'id'>, Document {
   _id: mongoose.Types.ObjectId;
@@ -99,3 +99,6 @@ FeedbackItemSchema.index({ 'context.intent': 1 });
 FeedbackItemSchema.index({ actionTaken: 1 });
 
 export const FeedbackModel = mongoose.model<IFeedbackItem>('FeedbackItem', FeedbackItemSchema);
+
+// Export the model as named export for consistency
+export { FeedbackModel as Feedback };

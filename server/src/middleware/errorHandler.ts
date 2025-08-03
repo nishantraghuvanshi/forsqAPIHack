@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '@/utils/logger';
-import { ApplicationError } from '@recommendation-engine/shared';
+import { logger } from '../utils/logger';
+import { ApplicationError } from '../types';
 
 export function errorHandler(
   err: Error | ApplicationError,

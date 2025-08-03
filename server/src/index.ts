@@ -5,14 +5,14 @@ import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 
-import { connectDatabase } from '@/config/database';
-import { setupMiddleware } from '@/middleware';
-import { setupRoutes } from '@/routes';
-import { logger } from '@/utils/logger';
-import { errorHandler } from '@/middleware/errorHandler';
+import { connectDatabase } from './config/database';
+import { setupMiddleware } from './middleware';
+import { setupRoutes } from './routes';
+import { logger } from './utils/logger';
+import { errorHandler } from './middleware/errorHandler';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from parent directory
+dotenv.config({ path: '../.env' });
 
 const app = express();
 const PORT = process.env.PORT || 5000;

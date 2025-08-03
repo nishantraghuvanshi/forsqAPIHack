@@ -4,12 +4,36 @@
   "description": "AI-powered location recommendation engine with Foursquare Places API integration",
   "private": true,
   "scripts": {
-    "test-server": "node test-server.js",
-    "dev": "node test-server.js"
+    "setup": "./scripts/setup.sh",
+    "configure": "./scripts/configure-api-keys.sh",
+    "validate": "./scripts/validate-env.sh",
+    "test-setup": "./scripts/test-setup.sh",
+    "test-server": "node scripts/test-server.js",
+    "validate-js": "node scripts/validate-env.js",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run start",
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "cd server && npm run build",
+    "build:client": "cd client && npm run build",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "cd server && npm test",
+    "test:client": "cd client && npm test",
+    "lint": "npm run lint:server && npm run lint:client",
+    "lint:server": "cd server && npm run lint",
+    "lint:client": "cd client && npm run lint",
+    "start": "npm run start:server",
+    "start:server": "cd server && npm start",
+    "clean": "npm run clean:server && npm run clean:client",
+    "clean:server": "cd server && npm run clean",
+    "clean:client": "cd client && npm run build && rm -rf client/build"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -18,7 +42,8 @@
   "keywords": [
     "recommendation-engine",
     "foursquare",
-    "openai",
+    "gemini-ai",
+    "google-ai",
     "location-based",
     "ai",
     "personalization",

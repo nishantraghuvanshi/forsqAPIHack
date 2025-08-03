@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { 
   Place, 
   RankedPlace, 
@@ -11,17 +11,25 @@ import {
 import { config } from '../config/config';
 import { logger } from '../utils/logger';
 
-export class OpenAIService {
-  private client: OpenAI;
+export class GeminiService {
+  private genAI: GoogleGenerativeAI;
+  private model: any;
 
   constructor() {
-    this.client = new OpenAI({
-      apiKey: config.openai.apiKey
+    this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+    this.model = this.genAI.getGenerativeModel({ 
+      model: config.gemini.model,
+      generationConfig: {
+        temperature: 0.3,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: config.gemini.maxTokens,
+      }
     });
   }
 
   /**
-   * Rank places based on user context and preferences using AI
+   * Rank places based on user context and preferences using Gemini AI
    */
   async rankPlaces(
     places: Place[],
@@ -33,31 +41,17 @@ export class OpenAIService {
     try {
       const prompt = this.buildRankingPrompt(places, userQuery, userContext, userPreferences, userHistory);
       
-      const completion = await this.client.chat.completions.create({
-        model: config.openai.model,
-        messages: [
-          {
-            role: 'system',
-            content: this.getSystemPrompt()
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: config.openai.maxTokens,
-        temperature: 0.3, // Lower temperature for more consistent rankings
-        response_format: { type: "json_object" }
-      });
+      const result = await this.model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
 
-      const response = completion.choices[0]?.message?.content;
-      if (!response) {
-        throw new Error('No response from OpenAI');
+      if (!text) {
+        throw new Error('No response from Gemini AI');
       }
 
-      return this.parseAIResponse(response, places);
+      return this.parseAIResponse(text, places);
     } catch (error) {
-      logger.error('Error ranking places with OpenAI', { error, userQuery });
+      logger.error('Error ranking places with Gemini AI', { error, userQuery });
       throw new Error('Failed to rank places using AI');
     }
   }
@@ -75,7 +69,7 @@ Given this place and user context, suggest the most relevant actions the user ca
 
 Place: ${place.name}
 Location: ${place.location.formatted_address}
-Categories: ${place.categories.map(c => c.name).join(', ')}
+Categories: ${place.categories.map((c: any) => c.name).join(', ')}
 Rating: ${place.rating || 'N/A'}
 Price: ${place.price ? '$'.repeat(place.price) : 'N/A'}
 Website: ${place.website || 'N/A'}
@@ -89,32 +83,35 @@ User Context:
 
 Return a JSON array of action suggestions with type, label, priority (1-5), and any relevant URL.
 Available action types: navigate, call, book, save, share, visit_website
+
+Format your response as valid JSON only, no additional text:
+{
+  "actions": [
+    {
+      "type": "navigate",
+      "label": "Get Directions",
+      "priority": 5,
+      "availability": "available"
+    }
+  ]
+}
 `;
 
-      const completion = await this.client.chat.completions.create({
-        model: config.openai.model,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an assistant that suggests contextual actions for places. Always respond with valid JSON.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.4,
-        response_format: { type: "json_object" }
-      });
+      const result = await this.model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
 
-      const response = completion.choices[0]?.message?.content;
-      if (!response) {
+      if (!text) {
         return this.getDefaultActions(place);
       }
 
-      const parsed = JSON.parse(response);
-      return parsed.actions || this.getDefaultActions(place);
+      try {
+        const parsed = JSON.parse(text);
+        return parsed.actions || this.getDefaultActions(place);
+      } catch (parseError) {
+        logger.warn('Failed to parse Gemini action suggestions', { parseError, text });
+        return this.getDefaultActions(place);
+      }
     } catch (error) {
       logger.error('Error generating action suggestions', { error, place: place.fsq_id });
       return this.getDefaultActions(place);
@@ -147,37 +144,36 @@ Extract user preferences and return JSON with:
 - preferredHours: {start: hour, end: hour} in 24h format
 
 Base this on patterns in the feedback data.
+
+Format your response as valid JSON only, no additional text:
+{
+  "categories": [],
+  "priceRange": [1, 4],
+  "maxDistance": 1000,
+  "preferredHours": {"start": 8, "end": 22}
+}
 `;
 
-      const completion = await this.client.chat.completions.create({
-        model: config.openai.model,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an assistant that analyzes user behavior to extract preferences. Always respond with valid JSON.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 300,
-        temperature: 0.2,
-        response_format: { type: "json_object" }
-      });
+      const result = await this.model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
 
-      const response = completion.choices[0]?.message?.content;
-      if (!response) {
+      if (!text) {
         return this.getDefaultPreferences();
       }
 
-      const parsed = JSON.parse(response);
-      return {
-        categories: parsed.categories || [],
-        priceRange: parsed.priceRange || [1, 4],
-        maxDistance: parsed.maxDistance || 1000,
-        preferredHours: parsed.preferredHours || { start: 8, end: 22 }
-      };
+      try {
+        const parsed = JSON.parse(text);
+        return {
+          categories: parsed.categories || [],
+          priceRange: parsed.priceRange || [1, 4],
+          maxDistance: parsed.maxDistance || 1000,
+          preferredHours: parsed.preferredHours || { start: 8, end: 22 }
+        };
+      } catch (parseError) {
+        logger.warn('Failed to parse Gemini feedback analysis', { parseError, text });
+        return this.getDefaultPreferences();
+      }
     } catch (error) {
       logger.error('Error analyzing user feedback', { error });
       return this.getDefaultPreferences();
@@ -185,7 +181,7 @@ Base this on patterns in the feedback data.
   }
 
   /**
-   * Build the ranking prompt for OpenAI
+   * Build the ranking prompt for Gemini AI
    */
   private buildRankingPrompt(
     places: Place[],
@@ -197,7 +193,7 @@ Base this on patterns in the feedback data.
     const placesInfo = places.map((place, index) => `
 ${index + 1}. ${place.name}
    - Location: ${place.location.formatted_address}
-   - Categories: ${place.categories.map(c => c.name).join(', ')}
+   - Categories: ${place.categories.map((c: any) => c.name).join(', ')}
    - Distance: ${place.distance ? `${place.distance}m` : 'Unknown'}
    - Rating: ${place.rating || 'N/A'}
    - Price: ${place.price ? '$'.repeat(place.price) : 'N/A'}
@@ -206,6 +202,8 @@ ${index + 1}. ${place.name}
 `).join('\n');
 
     return `
+You are an intelligent location recommendation assistant. Your job is to rank places based on user intent, context, and preferences.
+
 User Query: "${userQuery}"
 
 Current Context:
@@ -230,7 +228,16 @@ Rank these places from most to least relevant (1 being best) and provide:
 3. Suggested tags for each place
 4. Overall confidence in recommendations (0-1)
 
-Return JSON format:
+Consider factors like:
+- Relevance to user's stated intent and query
+- Current time and day of week appropriateness
+- Distance and convenience
+- User's price and category preferences
+- Opening hours and current availability
+- Group size suitability
+- Urgency level
+
+Format your response as valid JSON only, no additional text:
 {
   "rankedPlaces": [
     {
@@ -248,28 +255,21 @@ Return JSON format:
   }
 
   /**
-   * Get system prompt for AI assistant
-   */
-  private getSystemPrompt(): string {
-    return `You are an intelligent location recommendation assistant. Your job is to rank places based on user intent, context, and preferences. Consider factors like:
-
-1. Relevance to user's stated intent and query
-2. Current time and day of week appropriateness
-3. Distance and convenience
-4. User's price and category preferences
-5. Opening hours and current availability
-6. Group size suitability
-7. Urgency level
-
-Provide thoughtful, personalized recommendations with clear reasoning. Always respond with valid JSON format.`;
-  }
-
-  /**
    * Parse AI response and merge with place data
    */
   private parseAIResponse(response: string, originalPlaces: Place[]): AIRankingResponse {
     try {
-      const parsed = JSON.parse(response);
+      // Clean response to extract JSON
+      let jsonText = response.trim();
+      
+      // Remove markdown code blocks if present
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
+      }
+
+      const parsed = JSON.parse(jsonText);
       
       const rankedPlaces: RankedPlace[] = parsed.rankedPlaces.map((rankedPlace: any) => {
         const originalPlace = originalPlaces.find(p => p.fsq_id === rankedPlace.fsq_id);
@@ -296,8 +296,23 @@ Provide thoughtful, personalized recommendations with clear reasoning. Always re
         suggestedActions: [] // Will be filled by separate action suggestion call
       };
     } catch (error) {
-      logger.error('Error parsing AI response', { error, response });
-      throw new Error('Failed to parse AI ranking response');
+      logger.error('Error parsing Gemini AI response', { error, response });
+      
+      // Fallback: return places with default scoring
+      const fallbackRankedPlaces: RankedPlace[] = originalPlaces.map((place, index) => ({
+        ...place,
+        relevanceScore: Math.max(0.1, 1 - (index * 0.1)),
+        aiReasoning: 'Fallback ranking due to AI parsing error',
+        recommendationTags: ['general'],
+        estimatedBusyTime: 'medium'
+      }));
+
+      return {
+        rankedPlaces: fallbackRankedPlaces,
+        reasoning: 'Fallback ranking applied due to AI response parsing error',
+        confidence: 0.3,
+        suggestedActions: []
+      };
     }
   }
 
@@ -357,23 +372,15 @@ Provide thoughtful, personalized recommendations with clear reasoning. Always re
   }
 
   /**
-   * Health check for OpenAI API
+   * Health check for Gemini AI API
    */
   async healthCheck(): Promise<boolean> {
     try {
-      await this.client.chat.completions.create({
-        model: config.openai.model,
-        messages: [
-          {
-            role: 'user',
-            content: 'Test message'
-          }
-        ],
-        max_tokens: 10
-      });
-      return true;
+      const result = await this.model.generateContent('Test message');
+      const response = result.response;
+      return !!response.text();
     } catch (error) {
-      logger.error('OpenAI API health check failed', error);
+      logger.error('Gemini AI API health check failed', error);
       return false;
     }
   }

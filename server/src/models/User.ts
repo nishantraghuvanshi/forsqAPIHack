@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { User, UserPreferences } from '@recommendation-engine/shared';
+import { User, UserPreferences } from '../types';
 
 export interface IUser extends Omit<User, 'id'>, Document {
   _id: mongoose.Types.ObjectId;
@@ -101,3 +101,6 @@ UserSchema.index({ 'location.lat': 1, 'location.lng': 1 });
 UserSchema.index({ createdAt: 1 });
 
 export const UserModel = mongoose.model<IUser>('User', UserSchema);
+
+// Export the model as named export for consistency
+export { UserModel as User };

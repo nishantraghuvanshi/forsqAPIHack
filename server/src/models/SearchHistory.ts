@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { SearchHistory, SearchQuery, Place, UserContext, LatLng } from '@recommendation-engine/shared';
+import { SearchHistory, SearchQuery, Place, UserContext, LatLng } from '../types';
 
 export interface ISearchHistory extends Omit<SearchHistory, 'id'>, Document {
   _id: mongoose.Types.ObjectId;
@@ -138,3 +138,6 @@ SearchHistorySchema.index({ 'context.intent': 1 });
 SearchHistorySchema.index({ sessionId: 1 });
 
 export const SearchHistoryModel = mongoose.model<ISearchHistory>('SearchHistory', SearchHistorySchema);
+
+// Export the model as named export for consistency
+export { SearchHistoryModel as SearchHistory };

@@ -1,27 +1,27 @@
 import { Request, Response } from 'express';
-import { PlacesService } from '@/services/PlacesService';
-import { OpenAIService } from '@/services/OpenAIService';
-import { SearchHistoryService } from '@/services/SearchHistoryService';
-import { UserService } from '@/services/UserService';
-import { logger } from '@/utils/logger';
-import { validateSearchParams, validateUserLocation } from '@/utils/validation';
+import { PlacesService } from '../services/PlacesService';
+import { GeminiService } from '../services/GeminiService';
+import { SearchHistoryService } from '../services/SearchHistoryService';
+import { UserService } from '../services/UserService';
+import { logger } from '../utils/logger';
+import { validateSearchParams, validateUserLocation } from '../utils/validation';
 import { 
   SearchParams, 
   UserContext, 
   Place, 
   RankedPlace,
   AIRankingResponse 
-} from '@recommendation-engine/shared';
+} from '../types';
 
 export class PlacesController {
   private placesService: PlacesService;
-  private openAIService: OpenAIService;
+  private geminiService: GeminiService;
   private searchHistoryService: SearchHistoryService;
   private userService: UserService;
 
   constructor() {
     this.placesService = new PlacesService();
-    this.openAIService = new OpenAIService();
+    this.geminiService = new GeminiService();
     this.searchHistoryService = new SearchHistoryService();
     this.userService = new UserService();
   }
@@ -87,8 +87,8 @@ export class PlacesController {
         return;
       }
 
-      // Rank places using AI
-      const aiResponse: AIRankingResponse = await this.openAIService.rankPlaces(
+      // Rank places using Gemini AI
+      const aiResponse: AIRankingResponse = await this.geminiService.rankPlaces(
         places,
         query as string,
         userContext,
@@ -100,7 +100,7 @@ export class PlacesController {
       const topPlaces = aiResponse.rankedPlaces.slice(0, 5);
       const placesWithActions = await Promise.all(
         topPlaces.map(async (place) => {
-          const actions = await this.openAIService.generateActionSuggestions(place, userContext);
+          const actions = await this.geminiService.generateActionSuggestions(place, userContext);
           return { ...place, suggestedActions: actions };
         })
       );
@@ -215,7 +215,7 @@ export class PlacesController {
       };
 
       // Generate action suggestions
-      const suggestedActions = await this.openAIService.generateActionSuggestions(
+      const suggestedActions = await this.geminiService.generateActionSuggestions(
         place,
         userContext
       );
